@@ -257,16 +257,6 @@ mkdir docs
 - [ ] Cache de embeddings
 - [ ] Procesamiento distribuido
 
-## 🤝 Contribuciones
-
-Las contribuciones son bienvenidas! Por favor:
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -am 'Añadir nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Abre un Pull Request
-
 ## 📄 Licencia
 
 Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
@@ -279,9 +269,10 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 
 ## 📞 Contacto
 
-**[Tu Nombre]** - [tu.email@ejemplo.com]
+**[Yechua Silva]** - [yechua_silva@outlook.cl]
+**[Yechua Linkedin]** - [[Linkedin](https://www.linkedin.com/in/yechua-silva/)]
 
-Proyecto: [https://github.com/tu-usuario/rag-milvus-ollama](https://github.com/tu-usuario/rag-milvus-ollama)
+Proyecto: [Github Rag Milvus Ollama](https://github.com/yechua-silva/rag-milvus-ollama)
 
 ---
 
