@@ -40,7 +40,7 @@ volumes/*
 docs/milvus_docs/*
 # docs/milvus_docs/
 docs/milvus_docs
-docs/*
+docs/*.pdf
 examples/*
 main_prueba.py
 examples/
@@ -48,4 +48,3 @@ exampls
 logica_programacion.pdf
 sistem_design.md
 documentation.md
-.env

@@ -106,15 +106,15 @@ curl http://localhost:19530/health
 
 ### Configuración
 
-Crea un archivo `.env` (opcional) o modifica `config.py`:
+Modifica el archivo `.env` (opcional) o modifica `config.py`:
 
 ```env
-# Rutas
-PDF_PATH=./tu_documento.pdf
+# Rutas (usar DOCS_FOLDER para múltiples archivos)
+DOCS_FOLDER=./docs
 
 # Milvus
 MILVUS_URI=http://127.0.0.1:19530
-COLLECTION_NAME=pdf_knowledge_base
+COLLECTION_NAME=knowledge_base
 
 # Modelos
 EMBEDDING_MODEL=mxbai-embed-large
@@ -123,7 +123,7 @@ LLM_MODEL=qwen2.5:3b
 # Procesamiento de texto
 CHUNK_SIZE=800
 CHUNK_OVERLAP=100
-SEARCH_TOP_K=3
+SEARCH_TOP_K=5
 ```
 
 ### Ingesta de documentos
@@ -160,13 +160,14 @@ La programación orientada a objetos es un paradigma de programación que se bas
 ```
 ├── src/
 │   ├── infrastructure/
-│   │   ├── document_loader.py      # Carga de PDFs
+│   │   ├── document_loader.py      # Carga de múltiples PDFs
 │   │   ├── text_processor.py       # Limpieza y chunking
 │   │   ├── embedding_manager.py    # Generación de embeddings
 │   │   └── vector_store_manager.py # Gestión de Milvus
 │   └── application/
 │       ├── ingestion_service.py    # Orquestación de ingesta
 │       └── chat_service.py         # Servicio de chat
+├── docs/                           # Carpeta para documentos PDF
 ├── config.py                       # Configuración
 ├── main.py                         # Punto de entrada
 ├── docker-compose.yml              # Servicios de Docker
@@ -196,7 +197,7 @@ Para soportar otros formatos:
 ```python
 from src.infrastructure.vector_store_manager import MilvusManager
 
-vector_store = MilvusManager("collection_name", 1024)
+vector_store = MilvusManager("http://localhost:19530", "collection_name", 1024)
 stats = vector_store.get_stats()
 print(stats)
 ```
@@ -235,6 +236,14 @@ ollama list
 
 # Instalar modelo faltante
 ollama pull mxbai-embed-large
+```
+
+### Error: "No se encontraron archivos PDF"
+
+Asegurate de que la carpeta `docs` exista y contenga archivos PDF:
+
+```bash
+mkdir docs
 ```
 
 ## 🚀 Mejoras Futuras
