@@ -1,9 +1,10 @@
 from pymilvus import MilvusClient
 from typing import List, Dict
 from tqdm import tqdm
+from src.application.interfaces import VectorStore, Retriever
 
 
-class MilvusManager:
+class MilvusManager(VectorStore, Retriever):
     """Sabe como interactuar con Milvus: configurar, insertar y buscar"""
 
     def __init__(self, uri: str, collection_name: str, embedding_dim: int):
@@ -21,14 +22,14 @@ class MilvusManager:
         """Insertar chunks en Milvus con embeddings de manera eficiente"""
         print(f"Insertando {len(data)} chunks en Milvus...")
 
-        # Insertar en lotes grandes
+        # Insertar en lotes
         for i in tqdm(range(0, len(data), batch_size), desc="Insertando lotes en Milvus"):
             batch = data[i : i + batch_size]
             try:
                 self.client.insert(collection_name=self.collection_name, data=batch)
             except Exception as e:
                 print(f"Error insertando lote {i // batch_size}: {e}")
-                # Intentar insertar individualmente los elementos del lote problemático
+                # Intentar insertar individualmente los elementos del lote con error
                 for item in batch:
                     try:
                         self.client.insert(collection_name=self.collection_name, data=[item])
@@ -37,7 +38,6 @@ class MilvusManager:
 
         print("Datos insertados")
 
-        # Solución alternativa para el flush - usar compact en lugar de flush
         try:
             self.client.compact(collection_name=self.collection_name)
             print("Datos persistidos con compact")
@@ -65,9 +65,7 @@ class MilvusManager:
         try:
             stats = self.client.get_collection_stats(self.collection_name)
 
-            # Método alternativo para obtener el conteo
             try:
-                # Hacer una búsqueda con límite alto para estimar el conteo
                 result = self.client.search(
                     collection_name=self.collection_name,
                     data=[[0.0] * self.embedding_dim],

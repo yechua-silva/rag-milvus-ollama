@@ -270,6 +270,7 @@ Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
 ## 📞 Contacto
 
 **[Yechua Silva]** - [yechua_silva@outlook.cl]
+
 **[Yechua Linkedin]** - [[Linkedin](https://www.linkedin.com/in/yechua-silva/)]
 
 Proyecto: [Github Rag Milvus Ollama](https://github.com/yechua-silva/rag-milvus-ollama)

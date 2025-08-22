@@ -1,33 +1,22 @@
 import re
 from typing import List, Dict
 from tqdm import tqdm
+from src.application.interfaces import TextProcessor, Chunker
 
 
-class SmartChunker:
+class SmartChunker(Chunker):
     """Sabe como limpiar y dividir texto en chunks inteligentes"""
 
-    def __init__(self, chunk_size: int = 1000, overlap: int = 200):
+    def __init__(self, text_processor: TextProcessor, chunk_size: int = 1000, overlap: int = 200):
         """Inicializa el chunker con configuración específica.
 
         Args:
             chunk_size (int, optional): Tamaño maximo de cada chunk en caracteres. Defaults to 1000.
             overlap (int, optional): Cantidad de caracteres que se superponen entre chunks. Defaults to 200.
         """
+        self.text_processor = text_processor
         self.chunk_size = chunk_size
         self.overlap = overlap
-
-    def _clean_text(self, text: str) -> str:
-        """Limpia el texto extraido del PDF
-
-        Args:
-            text (str): Texto a limpiar
-
-        Returns:
-            str: Text limpio
-        """
-        text = re.sub(r"\s+", " ", text)
-        text = text.replace("\n", " ").replace("\r", " ")
-        return text.strip()
 
     def chunk(self, pages_data: List[Dict]) -> List[Dict]:
         """Divide en chunk preservando el contexto
@@ -42,9 +31,9 @@ class SmartChunker:
         chunk_id = 0
 
         for page_data in tqdm(pages_data, desc="Creando chunks..."):
-            text = self._clean_text(page_data["text"])  # Corregido: page_data en lugar de pages_data
-            page_num = page_data["page"]  # Corregido: page_data en lugar de pages_data
-            source = page_data["source"]  # Corregido: page_data en lugar de pages_data
+            text = self.text_processor.clean_text(page_data["page"])
+            page_num = page_data["page"]
+            source = page_data["source"]
 
             # si la pagina es pequeña, usar toda la pagina
             if len(text) <= self.chunk_size:
@@ -85,3 +74,20 @@ class SmartChunker:
                     if start >= len(text):
                         break
         return chunks
+
+
+class BasicTextProcessor(TextProcessor):
+    """Implementación concreta de TextProcessor para limpieza básica de texto"""
+
+    def _clean_text(self, text: str) -> str:
+        """Limpia el texto extraido del PDF
+
+        Args:
+            text (str): Texto a limpiar
+
+        Returns:
+            str: Text limpio
+        """
+        text = re.sub(r"\s+", " ", text)
+        text = text.replace("\n", " ").replace("\r", " ")
+        return text.strip()

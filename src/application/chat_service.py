@@ -1,7 +1,8 @@
 import ollama
+from src.application.interfaces import ResponseGenerator
 
 
-class ChatService:
+class ChatService(ResponseGenerator):
     """Orquestar flujo de chat: Buscar -> Generar respuestas"""
 
     def __init__(self, embedder, vector_store, llm_model, top_k):
@@ -45,24 +46,11 @@ class ChatService:
         Args:
             question (str): _description_
         """
-        # 1. Embeber la pregunta
+
         question_embedding = self.embedder.get_embedding(question)
-        # 2. Buscar en Milvus
         results = self.vector_store.search(question_embedding, self.top_k)
-        # 3. Generar respuesta (lógica de 'generate_answer_with_context')
         if not results:
             return "No encontré información relevante."
-        # context = "\n---\n".join(
-        #     [
-        #         f"[Fuente: {res['metadata']['source']}, Pagina: {res['metadata']['page']}]\n{res['text']}"
-        #         for res in results
-        #     ]
-        # )
-        # prompt = self._generate_prompt(context, question)
-
-        # response = ollama.chat(model=self.llm_model, messages=[{"role": "user", "content": prompt}])
-        # return response["message"]["content"]
-        # Formatear contexto
         context_parts = []
         for i, result in enumerate(results, 1):
             context_parts.append(

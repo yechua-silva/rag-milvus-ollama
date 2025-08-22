@@ -2,9 +2,10 @@ import fitz
 import os
 from typing import List, Dict
 from glob import glob
+from src.application.interfaces import DocumentLoader
 
 
-class PdfDocumentLoader:
+class PdfDocumentLoader(DocumentLoader):
     """Sabe como leer multiples archivos PDF y extraer su texto por pagina"""
 
     def __init__(self, docs_folder: str = "./docs"):
