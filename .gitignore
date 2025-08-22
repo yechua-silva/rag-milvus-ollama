@@ -1,0 +1,51 @@
+# Python virtual environment
+venv/
+env_llm_rag/
+
+# Jupyter Notebook files
+.ipynb_checkpoints/
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Docker-related files
+# docker-compose.yml
+Dockerfile
+
+# VSCode settings
+.vscode/
+
+# OS-specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+# IDE-specific files
+.idea/
+*.sln
+*.csproj
+*.userprefs
+
+# Database and storage files
+volumes/
+volumes/*
+
+# Docs - example
+docs/milvus_docs/*
+# docs/milvus_docs/
+docs/milvus_docs
+docs/*
+examples/*
+main_prueba.py
+examples/
+exampls
+logica_programacion.pdf
+sistem_design.md
+documentation.md
+.env

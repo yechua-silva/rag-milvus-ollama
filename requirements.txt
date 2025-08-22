@@ -1,0 +1,22 @@
+# ===========================================
+# CORE RAG DEPENDENCIES
+# ===========================================
+
+# Vector Database
+pymilvus==2.6.0
+
+# Local LLM and Embeddings
+ollama==0.5.3
+
+# PDF Processing
+PyMuPDF==1.26.3
+
+# Text Processing and Progress Bars
+tqdm==4.67.1
+regex==2025.7.34
+
+# Configuration Management
+python-dotenv==1.1.1
+
+# Data Processing
+numpy==2.3.2
