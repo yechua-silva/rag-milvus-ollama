@@ -11,7 +11,8 @@ class SmartChunker(Chunker):
         """Inicializa el chunker con configuración específica.
 
         Args:
-            chunk_size (int, optional): Tamaño maximo de cada chunk en caracteres. Defaults to 1000.
+            text_processor (TextProcessor): Procesador de texto para limpieza
+            chunk_size (int, optional): Tamaño máximo de cada chunk en caracteres. Defaults to 1000.
             overlap (int, optional): Cantidad de caracteres que se superponen entre chunks. Defaults to 200.
         """
         self.text_processor = text_processor
@@ -31,7 +32,7 @@ class SmartChunker(Chunker):
         chunk_id = 0
 
         for page_data in tqdm(pages_data, desc="Creando chunks..."):
-            text = self.text_processor.clean_text(page_data["page"])
+            text = self.text_processor.clean_text(page_data["text"])
             page_num = page_data["page"]
             source = page_data["source"]
 
@@ -79,7 +80,7 @@ class SmartChunker(Chunker):
 class BasicTextProcessor(TextProcessor):
     """Implementación concreta de TextProcessor para limpieza básica de texto"""
 
-    def _clean_text(self, text: str) -> str:
+    def clean_text(self, text: str) -> str:
         """Limpia el texto extraido del PDF
 
         Args:
