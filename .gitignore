@@ -53,3 +53,4 @@ sistem_design.md
 documentation.md
 milvus-standalone-docker-compose-gpu.yml
 
+models/*.onnx

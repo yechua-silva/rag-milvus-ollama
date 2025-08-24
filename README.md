@@ -1,31 +1,33 @@
-# 🤖 Sistema RAG (Retrieval-Augmented Generation) con Milvus y Ollama
+# 🤖 Sistema RAG con Arquitectura Limpia, Milvus y Aceleración por GPU
 
-Un sistema de chat inteligente que permite hacer preguntas sobre documentos PDF utilizando técnicas de recuperación aumentada de generación (RAG). El sistema procesa documentos PDF, los divide en chunks inteligentes, genera embeddings y permite consultas en lenguaje natural.
+Este es un sistema de chat inteligente y escalable que permite hacer preguntas sobre documentos PDF. Utiliza el patrón de **Arquitectura Limpia** para un diseño modular y soporta **aceleración por GPU** para optimizar el rendimiento del proceso de ingesta de datos.
 
-## ✨ Características
+---
 
-- **Procesamiento inteligente de PDFs**: Extracción automática de texto de todos los PDFs en la carpeta 'docs'
-- **Chunking adaptativo**: División inteligente del texto preservando el contexto
-- **Base de datos vectorial**: Almacenamiento eficiente usando Milvus
-- **Embeddings locales**: Generación de embeddings usando Ollama
-- **Chat interactivo**: Interfaz de línea de comandos para consultas
-- **Configuración flexible**: Variables de entorno para personalización
+## ✨ Características Principales
+
+- ✅ **Procesamiento de Documentos Flexible**: Extracción de texto de múltiples archivos PDF en una carpeta dedicada.
+- ✅ **Chunking Adaptativo**: División inteligente del texto que preserva el contexto estructural del documento.
+- ✅ **Base de Datos Vectorial Robusta**: Almacenamiento y búsqueda eficiente de embeddings con **Milvus**.
+- ✅ **Procesamiento Paralelo de Embeddings**: Generación de embeddings de forma acelerada usando la **GPU** (vía ONNX Runtime + DirectML/CUDA) o recurriendo a la **CPU** con **Ollama**.
+- ✅ **Arquitectura Limpia**: Diseño modular y escalable siguiendo principios de la Programación Orientada a Objetos (POO), ideal para proyectos de nivel profesional.
+- ✅ **Chat Interactivo**: Interfaz de línea de comandos para consultas en lenguaje natural sobre el contenido de los documentos.
+
+---
 
 ## 🚀 Instalación Rápida
 
 ### Prerrequisitos
 
-- Python 3.8+
-- Docker y Docker Compose
-- Git
+- **Python 3.8+**
+- **Docker** y **Docker Compose** (necesarios para Milvus)
+- **Git**
 
 ### 1. Clonar el repositorio
 
-```bash
-git clone https://github.com/tu-usuario/rag-milvus-ollama.git
+````bash
+git clone [https://github.com/tu-usuario/rag-milvus-ollama.git](https://github.com/tu-usuario/rag-milvus-ollama.git)
 cd rag-milvus-ollama
-```
-
 ### 2. Crear entorno virtual
 
 ```bash
@@ -36,7 +38,7 @@ venv\Scripts\activate
 # Linux/macOS
 python3 -m venv venv
 source venv/bin/activate
-```
+````
 
 ### 3. Instalar dependencias
 
@@ -96,6 +98,17 @@ curl http://localhost:19530/health
 
 Modifica el archivo `.env` (opcional) o modifica `config.py`:
 
+**Configuracion de Acelarion (GPU/CPU)**
+El sistema está diseñado para detectar y usar automáticamente tu GPU.
+
+- Para tarjetas AMD (DirectML) / NVIDIA (CUDA): El sistema intentará usar la GPU por defecto. Asegúrate de tener los drivers más recientes instalados.
+
+- Para forzar el uso de la CPU: En config.py, cambia la siguiente línea:
+
+```py
+USE_GPU = os.environ.get("USE_GPU", "false").lower() == "true"
+```
+
 ```env
 # Rutas (usar DOCS_FOLDER para múltiples archivos)
 DOCS_FOLDER=./docs
@@ -133,12 +146,10 @@ python main.py
 ```
 Sistema de Chat RAG listo. Escribe 'salir' para terminar.
 
-Pregunta: ¿Qué es la programación orientada a objetos?
+Pregunta: ¿Quién es el autor del libro y de qué se trata la lógica de programación?
 
 Respuesta:
-La programación orientada a objetos es un paradigma de programación que se basa en el concepto de "objetos", los cuales pueden contener datos (atributos) y código (métodos). Este paradigma permite crear software más modular, reutilizable y fácil de mantener...
-
-[Fuente: logica_programacion.pdf, Pagina: 15]
+El autor del libro "Lógica de Programación" es Omar Iván Trejos Buriticá. La lógica de programación es la unión de conceptos sencillos para el diseño de soluciones lógicas, que nos permiten diseñar soluciones a problemas que pueden ser implementados a través de un computador. Se basa en un conjunto de normas técnicas que permiten desarrollar un algoritmo entendible para la solución de un problema.
 ```
 
 ## 🛠️ Desarrollo
@@ -146,20 +157,26 @@ La programación orientada a objetos es un paradigma de programación que se bas
 ### Estructura del proyecto
 
 ```
-├── src/
-│   ├── infrastructure/
-│   │   ├── document_loader.py      # Carga de múltiples PDFs
-│   │   ├── text_processor.py       # Limpieza y chunking
-│   │   ├── embedding_manager.py    # Generación de embeddings
-│   │   └── vector_store_manager.py # Gestión de Milvus
-│   └── application/
-│       ├── ingestion_service.py    # Orquestación de ingesta
-│       └── chat_service.py         # Servicio de chat
-├── docs/                           # Carpeta para documentos PDF
-├── config.py                       # Configuración
-├── main.py                         # Punto de entrada
-├── docker-compose.yml              # Servicios de Docker
-└── requirements.txt                # Dependencias Python
+/tu_proyecto
+|-- src/
+|   |-- domain/                         # Modelos de datos puros (e.g., DocumentChunk)
+|   |-- application/                    # Lógica de negocio y orquestación
+|   |   |-- chat_service.py
+|   |   ├── ingestion_orchestrator.py   # Orquestador para ingesta paralela con GPU
+|   |   ├── orchestrator.py             # Orquestador general (ingesta/chat)
+|   |   └── interfaces.py               # Definición de interfaces (contratos)
+|   ├── infrastructure/                 # Implementaciones concretas y dependencias
+|   │   ├── document_loader.py          # Carga de PDFs
+|   │   ├── embedding_gpu.py            # Generador de embeddings con GPU (ONNX)
+|   │   ├── embedding_manager.py        # Generador de embeddings con CPU (Ollama)
+|   │   ├── text_processor.py           # Lógica de chunking y limpieza de texto
+|   │   └── vector_store_manager.py     # Lógica de Milvus
+|   └── main.py                         # Punto de entrada y configuración
+├── docs/                               # Carpeta para documentos PDF
+├── models/                             # Modelos ONNX generados automáticamente
+├── config.py                           # Configuración centralizada
+├── docker-compose.yml                  # Configuración de Docker para Milvus
+└── requirements.txt                    # Dependencias del proyecto
 ```
 
 ### Arquitectura Clean
@@ -195,6 +212,21 @@ print(stats)
 Accede a `http://localhost:9001` (MinIO) para gestión de archivos.
 
 ## 🔧 Solución de Problemas
+
+### Error: "GPU no detectada" o DmlExecutionProvider not found
+
+**Causa Principal:** onnxruntime no puede comunicarse con tu GPU.
+
+**Solución:**
+
+1. Actualiza los drivers de tu GPU a la última versión disponible (Adrenalin para AMD, Game Ready/Studio para NVIDIA).
+
+2. Realiza una reinstalación limpia de las librerías de ONNX:
+
+```bash
+pip uninstall onnx onnxruntime onnxruntime-directml -y
+pip install onnx onnxruntime-directml
+```
 
 ### Error: "Ollama not found"
 
@@ -234,16 +266,23 @@ Asegurate de que la carpeta `docs` exista y contenga archivos PDF:
 mkdir docs
 ```
 
+##
+
 ## 🚀 Mejoras Futuras
 
-- [ ] Soporte para múltiples tipos de documentos (Word, HTML, etc.)
-- [ ] Interfaz web con Streamlit/Gradio
-- [ ] API REST con FastAPI
-- [ ] Integración con bases de datos relacionales
-- [ ] Sistema de autenticación
-- [ ] Métricas de relevancia y evaluación
-- [ ] Cache de embeddings
-- [ ] Procesamiento distribuido
+- [ ] Implementar un HierarchicalChunker más avanzado.
+
+- [ ] Incorporar un Reranker para mejorar la precisión de las respuestas.
+
+- [ ] Soportar múltiples tipos de documentos (HTML, Word, etc.).
+
+- [ ] Añadir una interfaz web con Streamlit o Gradio.
+
+- [ ] Desarrollar una API REST con FastAPI.
+
+- [ ] Integrar métricas de evaluación de relevancia.
+
+- [ ] Desarrollar un sistema de memoria de conversación.
 
 ## 📄 Licencia
 
