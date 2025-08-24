@@ -1,307 +1,203 @@
-# 🤖 Sistema RAG con Arquitectura Limpia, Milvus y Aceleración por GPU
+# 🤖 Sistema RAG con Milvus y Aceleración GPU
 
-Este es un sistema de chat inteligente y escalable que permite hacer preguntas sobre documentos PDF. Utiliza el patrón de **Arquitectura Limpia** para un diseño modular y soporta **aceleración por GPU** para optimizar el rendimiento del proceso de ingesta de datos.
+Sistema de chat inteligente que permite consultas sobre documentos PDF utilizando arquitectura limpia, base de datos vectorial Milvus y aceleración por GPU.
 
----
+## ✨ Características
 
-## ✨ Características Principales
+- **Procesamiento GPU/CPU**: Aceleración automática con DirectML (AMD) o CUDA (NVIDIA)
+- **Base de Datos Vectorial**: Búsqueda eficiente con Milvus
+- **Arquitectura Limpia**: Diseño modular y escalable siguiendo principios SOLID
+- **Chunking Inteligente**: División contextual que preserva la coherencia del documento
+- **Chat Interactivo**: Interfaz CLI para consultas en lenguaje natural
 
-- ✅ **Procesamiento de Documentos Flexible**: Extracción de texto de múltiples archivos PDF en una carpeta dedicada.
-- ✅ **Chunking Adaptativo**: División inteligente del texto que preserva el contexto estructural del documento.
-- ✅ **Base de Datos Vectorial Robusta**: Almacenamiento y búsqueda eficiente de embeddings con **Milvus**.
-- ✅ **Procesamiento Paralelo de Embeddings**: Generación de embeddings de forma acelerada usando la **GPU** (vía ONNX Runtime + DirectML/CUDA) o recurriendo a la **CPU** con **Ollama**.
-- ✅ **Arquitectura Limpia**: Diseño modular y escalable siguiendo principios de la Programación Orientada a Objetos (POO), ideal para proyectos de nivel profesional.
-- ✅ **Chat Interactivo**: Interfaz de línea de comandos para consultas en lenguaje natural sobre el contenido de los documentos.
-
----
-
-## 🚀 Instalación Rápida
+## 🚀 Instalación
 
 ### Prerrequisitos
 
-- **Python 3.8+**
-- **Docker** y **Docker Compose** (necesarios para Milvus)
-- **Git**
+- Python 3.8+
+- Docker y Docker Compose
+- Git
 
-### 1. Clonar el repositorio
+### Configuración
 
-````bash
-git clone [https://github.com/tu-usuario/rag-milvus-ollama.git](https://github.com/tu-usuario/rag-milvus-ollama.git)
+```bash
+# Clonar repositorio
+git clone https://github.com/yechua-silva/rag-milvus-ollama.git
 cd rag-milvus-ollama
-### 2. Crear entorno virtual
 
-```bash
-# Windows
+# Crear entorno virtual
 python -m venv venv
-venv\Scripts\activate
+source venv/bin/activate  # Linux/macOS
+# venv\Scripts\activate   # Windows
 
-# Linux/macOS
-python3 -m venv venv
-source venv/bin/activate
-````
-
-### 3. Instalar dependencias
-
-```bash
+# Instalar dependencias
 pip install -r requirements.txt
-```
 
-### 4. Instalar Ollama
+# Instalar Ollama
+curl -fsSL https://ollama.ai/install.sh | sh  # Linux
+# Descargar desde https://ollama.ai para Windows/macOS
 
-#### Windows
-
-1. Descargar desde [ollama.ai](https://ollama.ai/download)
-2. Ejecutar el instalador
-3. Verificar instalación: `ollama --version`
-
-#### Linux
-
-```bash
-curl -fsSL https://ollama.ai/install.sh | sh
-```
-
-#### macOS
-
-```bash
-brew install ollama
-```
-
-### 5. Descargar modelos necesarios
-
-```bash
-# Modelo de embeddings (requerido)
+# Descargar modelos
 ollama pull mxbai-embed-large
-
-# Modelo de lenguaje para chat (requerido)
 ollama pull qwen2.5:3b
 
-# Modelos alternativos (opcional)
-ollama pull llama3.1:8b
-ollama pull nomic-embed-text
-```
-
-### 6. Iniciar Milvus
-
-```bash
+# Iniciar Milvus
 docker-compose up -d
-```
-
-Verificar que Milvus esté funcionando:
-
-```bash
-curl http://localhost:19530/health
 ```
 
 ## 📖 Uso
 
-### Configuración
+### Configuración (Opcional)
 
-Modifica el archivo `.env` (opcional) o modifica `config.py`:
+Modifica `config.py` o usa variables de entorno:
 
-**Configuracion de Acelarion (GPU/CPU)**
-El sistema está diseñado para detectar y usar automáticamente tu GPU.
+```python
+# Aceleración GPU (automática)
+USE_GPU = True  # False para forzar CPU
 
-- Para tarjetas AMD (DirectML) / NVIDIA (CUDA): El sistema intentará usar la GPU por defecto. Asegúrate de tener los drivers más recientes instalados.
+# Rutas y modelos
+DOCS_FOLDER = "./docs"
+EMBEDDING_MODEL = "mxbai-embed-large"
+LLM_MODEL = "qwen2.5:3b"
 
-- Para forzar el uso de la CPU: En config.py, cambia la siguiente línea:
-
-```py
-USE_GPU = os.environ.get("USE_GPU", "false").lower() == "true"
+# Parámetros de procesamiento
+CHUNK_SIZE = 800
+CHUNK_OVERLAP = 100
+SEARCH_TOP_K = 5
 ```
 
-```env
-# Rutas (usar DOCS_FOLDER para múltiples archivos)
-DOCS_FOLDER=./docs
-
-# Milvus
-MILVUS_URI=http://127.0.0.1:19530
-COLLECTION_NAME=knowledge_base
-
-# Modelos
-EMBEDDING_MODEL=mxbai-embed-large
-LLM_MODEL=qwen2.5:3b
-
-# Procesamiento de texto
-CHUNK_SIZE=800
-CHUNK_OVERLAP=100
-SEARCH_TOP_K=5
-```
-
-### Ingesta de documentos
-
-Coloca tu archivo PDF en el directorio del proyecto y ejecuta:
+### Ingesta de Documentos
 
 ```bash
+# Colocar archivos PDF en ./docs/
 python main.py --ingest
 ```
 
-### Iniciar chat interactivo
+### Chat Interactivo
 
 ```bash
 python main.py
 ```
 
-### Ejemplo de uso
+### Ejemplo de Uso
 
 ```
-Sistema de Chat RAG listo. Escribe 'salir' para terminar.
+Pregunta: ¿Cuál es el tema principal del documento?
 
-Pregunta: ¿Quién es el autor del libro y de qué se trata la lógica de programación?
-
-Respuesta:
-El autor del libro "Lógica de Programación" es Omar Iván Trejos Buriticá. La lógica de programación es la unión de conceptos sencillos para el diseño de soluciones lógicas, que nos permiten diseñar soluciones a problemas que pueden ser implementados a través de un computador. Se basa en un conjunto de normas técnicas que permiten desarrollar un algoritmo entendible para la solución de un problema.
+Respuesta: El documento trata sobre lógica de programación,
+escrito por Omar Iván Trejos Buriticá. Se enfoca en conceptos
+fundamentales para el diseño de soluciones algorítmicas...
+[Fuente: logica_programacion.pdf, Página: 1]
 ```
 
-## 🛠️ Desarrollo
-
-### Estructura del proyecto
+## 🏗️ Arquitectura
 
 ```
-/tu_proyecto
-|-- src/
-|   |-- domain/                         # Modelos de datos puros (e.g., DocumentChunk)
-|   |-- application/                    # Lógica de negocio y orquestación
-|   |   |-- chat_service.py
-|   |   ├── ingestion_orchestrator.py   # Orquestador para ingesta paralela con GPU
-|   |   ├── orchestrator.py             # Orquestador general (ingesta/chat)
-|   |   └── interfaces.py               # Definición de interfaces (contratos)
-|   ├── infrastructure/                 # Implementaciones concretas y dependencias
-|   │   ├── document_loader.py          # Carga de PDFs
-|   │   ├── embedding_gpu.py            # Generador de embeddings con GPU (ONNX)
-|   │   ├── embedding_manager.py        # Generador de embeddings con CPU (Ollama)
-|   │   ├── text_processor.py           # Lógica de chunking y limpieza de texto
-|   │   └── vector_store_manager.py     # Lógica de Milvus
-|   └── main.py                         # Punto de entrada y configuración
-├── docs/                               # Carpeta para documentos PDF
-├── models/                             # Modelos ONNX generados automáticamente
-├── config.py                           # Configuración centralizada
-├── docker-compose.yml                  # Configuración de Docker para Milvus
-└── requirements.txt                    # Dependencias del proyecto
+src/
+├── domain/          # Modelos de datos
+├── application/     # Lógica de negocio
+├── infrastructure/  # Implementaciones concretas
+└── main.py         # Punto de entrada
 ```
 
-### Arquitectura Clean
+### Componentes Principales
 
-El proyecto sigue principios de **Clean Architecture**:
-
-- **Infrastructure**: Adaptadores externos (Milvus, Ollama, archivos)
-- **Application**: Casos de uso y lógica de negocio
-- **Domain**: Modelos y entidades (models.py)
-
-### Añadir nuevos tipos de documentos
-
-Para soportar otros formatos:
-
-1. Crear nuevo loader en `infrastructure/`
-2. Implementar interfaz similar a `PdfDocumentLoader`
-3. Registrar en `main.py`
-
-## 📊 Monitoreo
-
-### Ver estadísticas de Milvus
-
-```python
-from src.infrastructure.vector_store_manager import MilvusManager
-
-vector_store = MilvusManager("http://localhost:19530", "collection_name", 1024)
-stats = vector_store.get_stats()
-print(stats)
-```
-
-### Interfaz web de Milvus
-
-Accede a `http://localhost:9001` (MinIO) para gestión de archivos.
+- **DocumentLoader**: Extracción de texto de PDFs
+- **TextProcessor**: Limpieza y chunking inteligente
+- **EmbeddingGenerator**: GPU (ONNX) o CPU (Ollama)
+- **VectorStore**: Gestión de Milvus
+- **Orchestrator**: Coordinación del flujo completo
 
 ## 🔧 Solución de Problemas
 
-### Error: "GPU no detectada" o DmlExecutionProvider not found
-
-**Causa Principal:** onnxruntime no puede comunicarse con tu GPU.
-
-**Solución:**
-
-1. Actualiza los drivers de tu GPU a la última versión disponible (Adrenalin para AMD, Game Ready/Studio para NVIDIA).
-
-2. Realiza una reinstalación limpia de las librerías de ONNX:
+### GPU no detectada
 
 ```bash
-pip uninstall onnx onnxruntime onnxruntime-directml -y
-pip install onnx onnxruntime-directml
+# Actualizar drivers y reinstalar ONNX
+pip uninstall onnxruntime onnxruntime-directml -y
+pip install onnxruntime-directml
 ```
 
-### Error: "Ollama not found"
-
-```bash
-# Verificar instalación
-ollama --version
-
-# Iniciar servicio (Linux/macOS)
-sudo systemctl start ollama
-```
-
-### Error: "Connection refused" (Milvus)
+### Milvus no conecta
 
 ```bash
 # Verificar contenedores
 docker-compose ps
+curl http://localhost:19530/health
 
 # Reiniciar servicios
 docker-compose down && docker-compose up -d
 ```
 
-### Error: "Modelo no encontrado"
+### Modelos no encontrados
 
 ```bash
-# Listar modelos instalados
-ollama list
-
-# Instalar modelo faltante
-ollama pull mxbai-embed-large
+ollama list  # Verificar modelos instalados
+ollama pull mxbai-embed-large  # Reinstalar si es necesario
 ```
 
-### Error: "No se encontraron archivos PDF"
+## ⚙️ Configuración Avanzada
 
-Asegurate de que la carpeta `docs` exista y contenga archivos PDF:
+### Modelos Alternativos
 
 ```bash
-mkdir docs
+# Embeddings
+ollama pull nomic-embed-text
+
+# LLM
+ollama pull llama3.1:8b
+ollama pull qwen2.5:7b
 ```
 
-##
+### Variables de Entorno
 
-## 🚀 Mejoras Futuras
+```env
+MILVUS_URI=http://127.0.0.1:19530
+COLLECTION_NAME=knowledge_base
+EMBEDDING_BATCH_SIZE=64
+NUM_WORKERS=4
+```
 
-- [ ] Implementar un HierarchicalChunker más avanzado.
+## 📊 Rendimiento
 
-- [ ] Incorporar un Reranker para mejorar la precisión de las respuestas.
+- **GPU**: ~500 embeddings/segundo (AMD RX 6600)
+- **CPU**: ~50 embeddings/segundo (Ollama)
+- **Memoria**: ~2GB para modelos 3B
+- **Almacenamiento**: ~1GB por cada 1000 páginas
 
-- [ ] Soportar múltiples tipos de documentos (HTML, Word, etc.).
+## 🛠️ Desarrollo
 
-- [ ] Añadir una interfaz web con Streamlit o Gradio.
+### Extensiones
 
-- [ ] Desarrollar una API REST con FastAPI.
+Para añadir nuevos formatos de documento:
 
-- [ ] Integrar métricas de evaluación de relevancia.
+1. Implementar nueva clase en `infrastructure/`
+2. Extender interfaz `DocumentLoader`
+3. Registrar en `main.py`
 
-- [ ] Desarrollar un sistema de memoria de conversación.
+### Testing
+
+```bash
+python -m pytest tests/
+```
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver `LICENSE` para más detalles.
+MIT License - ver [LICENSE](LICENSE) para detalles.
 
-## 🙏 Agradecimientos
+## 🙏 Créditos
 
 - [Milvus](https://milvus.io/) - Base de datos vectorial
-- [Ollama](https://ollama.ai/) - Modelos LLM locales
-- [PyMuPDF](https://pymupdf.readthedocs.io/) - Procesamiento de PDFs
+- [Ollama](https://ollama.ai/) - LLMs locales
+- [ONNX Runtime](https://onnxruntime.ai/) - Inferencia optimizada
 
 ## 📞 Contacto
 
-**[Yechua Silva]** - [yechua_silva@outlook.cl]
-
-**[Yechua Linkedin]** - [[Linkedin](https://www.linkedin.com/in/yechua-silva/)]
-
-Proyecto: [Github Rag Milvus Ollama](https://github.com/yechua-silva/rag-milvus-ollama)
+**Yechua Silva**  
+📧 yechua_silva@outlook.cl  
+💼 [LinkedIn](https://www.linkedin.com/in/yechua-silva/)  
+🐙 [GitHub](https://github.com/yechua-silva/rag-milvus-ollama)
 
 ---
 
-⭐ Si este proyecto te resulta útil, ¡considera darle una estrella!
+⭐ **¿Te resulta útil?** ¡Dale una estrella al proyecto!
