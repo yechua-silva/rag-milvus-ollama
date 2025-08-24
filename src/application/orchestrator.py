@@ -54,42 +54,53 @@ class Orchestrator:
 
     def ask_question(self, question: str) -> str:
         """Procesa una pregunta y genera una respuesta"""
+        print("1. Generando embedding para la pregunta...")
         question_embedding = self.embedder.get_embedding(question)
 
+        print("2. Buscando en la base de conocimiento...")
         results = self.vector_store.search(question_embedding, self.search_top_k)
 
-        # Generar respuesta
         if not results:
-            return "No encontré información relevante."
+            return "No encontré información relevante en los documentos para responder a esta pregunta."
 
-        # Formatear contexto
+        # Formatear el contexto de una manera muy clara para el LLM
         context_parts = []
         for i, result in enumerate(results, 1):
-            context_parts.append(
-                f"[Fuente: {result['metadata']['source']}, Página: {result['metadata']['page']}]\n"
-                f"{result['text']}\n"
-            )
+            source = result["metadata"].get("source", "desconocida")
+            page = result["metadata"].get("page", "?")
+            context_parts.append(f"--- Fuente {i} (Documento: {source}, Página: {page}) ---\n" f"{result['text']}\n")
+        context = "\n".join(context_parts)
 
-        context = "\n---\n".join(context_parts)
+        # **PROMPT MEJORADO Y MÁS ESTRICTO**
+        prompt = f"""
+        **Tu Tarea:** Eres un asistente experto que responde preguntas basándose
+        EXCLUSIVAMENTE en el contexto proporcionado de los documentos.
 
-        # Generar prompt y respuesta
-        import ollama
+        **REGLAS ESTRICTAS E INQUEBRANTABLES:**
+        1.  **NO PUEDES** usar ningún conocimiento externo.
+            Tu única fuente de verdad es el texto en la sección "CONTEXTO DE LOS DOCUMENTOS".
+        2.  Lee el CONTEXTO cuidadosamente y extrae de él la información necesaria para responder
+            la PREGUNTA DEL USUARIO.
+        3.  Si la respuesta se encuentra en el contexto, formúlala con tus propias palabras,
+            siendo claro y conciso.
+        4.  **Cita tus fuentes OBLIGATORIAMENTE.** Después de cada pieza de información,
+            debes añadir la cita correspondiente, por ejemplo: [Fuente: nombre_del_archivo.pdf, Página: X].
+        5.  Si después de leer todo el contexto, la información para responder la pregunta no se encuentra,
+            debes responder **EXACTAMENTE** con la frase:
+            "La información necesaria para responder a esta pregunta no se encuentra en
+            los documentos proporcionados." No intentes adivinar.
 
-        prompt = f"""Eres un asistente especializado que responde preguntas
-        basándose únicamente en el contexto proporcionado.
-
-        CONTEXTO:
+        **CONTEXTO DE LOS DOCUMENTOS:**
         {context}
 
-        PREGUNTA: {question}
+        **PREGUNTA DEL USUARIO:**
+        {question}
 
-        INSTRUCCIONES:
-        1. Responde únicamente con información del contexto proporcionado
-        2. Si no hay información suficiente, di que no sabes
-        3. Cita las fuentes (documento y página) cuando sea relevante
-        4. Sé preciso y conciso
+        **RESPUESTA (basada únicamente en el contexto y citando las fuentes):**
+        """
 
-        RESPUESTA:"""
+        print("3. Generando respuesta con el LLM...")
+        import ollama
 
         response = ollama.chat(model=self.llm_model, messages=[{"role": "user", "content": prompt}])
         return response["message"]["content"]

@@ -1,7 +1,13 @@
 # ===========================================
 # CORE RAG DEPENDENCIES
 # ===========================================
-
+# ONNX Core Libraries
+onnx
+# GPU embeddigns
+onnxruntime-directml
+transformers
+torch
+sentence-transformers
 # Vector Database
 pymilvus==2.6.0
 

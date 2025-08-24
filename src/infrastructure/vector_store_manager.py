@@ -13,10 +13,14 @@ class MilvusManager(VectorStore, Retriever):
         self.embedding_dim = embedding_dim
 
     def set_collection(self):
-        """Configura la coleccion de Milvus"""
+        """Configura la colección de Milvus, asegurando la dimensión correcta."""
         if self.client.has_collection(collection_name=self.collection_name):
+            print(f"Eliminando colección existente '{self.collection_name}' para asegurar consistencia de dimensión.")
             self.client.drop_collection(collection_name=self.collection_name)
+
+        print(f"Creando nueva colección '{self.collection_name}' con dimensión {self.embedding_dim}...")
         self.client.create_collection(collection_name=self.collection_name, dimension=self.embedding_dim)
+        print("Colección creada con éxito.")
 
     def insert(self, data: List[Dict], batch_size: int = 100):
         """Insertar chunks en Milvus con embeddings de manera eficiente"""
