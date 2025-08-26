@@ -43,6 +43,44 @@ class Embedder(ABC):
         pass
 
 
+class OrchestratorInterface(ABC):
+    """Interface para el orquestador"""
+
+    @abstractmethod
+    def ingest_documents(self, text: str):
+        """Ejecuta el proceso de ingesta de documentos"""
+        pass
+
+    @abstractmethod
+    def ask_question(self, question: str) -> str:
+        """Procesa una pregunta y genera un respuesta"""
+        pass
+
+
+class EmbedderGPUGEnerator(ABC):
+    """Interface para generador de embeddings"""
+
+    @abstractmethod
+    def get_embedding(self, text: str) -> List[float]:
+        """Genera un embedding para un texto individual"""
+        pass
+
+    @abstractmethod
+    def get_embeddings_batch(self, texts: List[str], batch_size: int = 32) -> List[List[float]]:
+        """Genera embeddins para un lote de textos"""
+        pass
+
+    @abstractmethod
+    def generate_embeddings(self, texts: List[str]):
+        """Genera embeddings en forma array para una lista de textos"""
+        pass
+
+    @abstractmethod
+    def get_embedding_dim(self) -> int:
+        """Retorna la dimension de los embeddings"""
+        pass
+
+
 class VectorStore(ABC):
     """Interface para almacenar y gestionar vectores"""
 

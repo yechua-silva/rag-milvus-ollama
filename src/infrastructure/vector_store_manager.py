@@ -1,7 +1,8 @@
 from pymilvus import MilvusClient
-from typing import List, Dict
+from typing import List
 from tqdm import tqdm
 from src.application.interfaces import VectorStore, Retriever
+from src.domain.models import DocumentChunk, SearchResult
 
 
 class MilvusManager(VectorStore, Retriever):
@@ -22,13 +23,30 @@ class MilvusManager(VectorStore, Retriever):
         self.client.create_collection(collection_name=self.collection_name, dimension=self.embedding_dim)
         print("Colección creada con éxito.")
 
-    def insert(self, data: List[Dict], batch_size: int = 100):
+    def insert(self, chunks: List[DocumentChunk], batch_size: int = 100):
         """Insertar chunks en Milvus con embeddings de manera eficiente"""
-        print(f"Insertando {len(data)} chunks en Milvus...")
 
-        # Insertar en lotes
-        for i in tqdm(range(0, len(data), batch_size), desc="Insertando lotes en Milvus"):
-            batch = data[i : i + batch_size]
+        # Adaptacion a uso de models
+        data_to_insert = [
+            {
+                "id": hash(chunk.chunk_id),
+                "vector": chunk.embedding,
+                "text": chunk.text,
+                "metadata": chunk.metadata,
+                "chunk_id": chunk.chunk_id,
+                "doc_id": chunk.doc_id,
+            }
+            for chunk in chunks
+            if chunk.embedding is not None
+        ]
+
+        if not data_to_insert:
+            print("Advertencia: No hay chunks con emebeddings para insertar.")
+            return
+
+        print(f"Insertando {len(data_to_insert)} chunks en Milvus...")
+        for i in tqdm(range(0, len(data_to_insert), batch_size), desc="Insertando lotes"):
+            batch = data_to_insert[i : i + batch_size]
             try:
                 self.client.insert(collection_name=self.collection_name, data=batch)
             except Exception as e:
@@ -39,51 +57,40 @@ class MilvusManager(VectorStore, Retriever):
                         self.client.insert(collection_name=self.collection_name, data=[item])
                     except Exception as single_error:
                         print(f"Error insertando item individual: {single_error}")
-
-        print("Datos insertados")
-
         try:
             self.client.compact(collection_name=self.collection_name)
             print("Datos persistidos con compact")
         except Exception as e:
             print(f"Error haciendo compact: {e}")
 
-    def search(self, vector: List[float], top_k: int) -> List[Dict]:
+    def search(self, vector: List[float], top_k: int) -> List[SearchResult]:
         """Busca en la base de conocimiento"""
         search_res = self.client.search(
-            collection_name=self.collection_name, data=[vector], limit=top_k, output_fields=["text", "page", "source"]
+            collection_name=self.collection_name,
+            data=[vector],
+            limit=top_k,
+            output_fields=["text", "metadata", "chunk_id", "doc_id"],
         )
 
-        results = [
-            {
-                "text": res["entity"]["text"],
-                "metadata": {"page": res["entity"]["page"], "source": res["entity"]["source"]},
-                "similarity": res["distance"],
-            }
-            for res in search_res[0]
-        ]
+        results = []
+        for res in search_res[0]:
+            retrieved_chunk = DocumentChunk(
+                chunk_id=res["entity"]["chunk_id"],
+                doc_id=res["entity"]["doc_id"],
+                text=res["entity"]["text"],
+                metadata=res["entity"]["metadata"],
+            )
+            results.append(SearchResult(chunk=retrieved_chunk, similarity=res["distance"]))
+
         return results
 
     def get_stats(self):
         """Obtiene estadísticas de la colección"""
         try:
             stats = self.client.get_collection_stats(self.collection_name)
-
-            try:
-                result = self.client.search(
-                    collection_name=self.collection_name,
-                    data=[[0.0] * self.embedding_dim],
-                    limit=10000,  # Límite alto
-                    output_fields=["id"],
-                )
-                if result:
-                    stats["row_count"] = len(result[0])
-                else:
-                    stats["row_count"] = 0
-            except Exception as e:
-                print(f"Error al obtener conteo: {e}")
-                stats["row_count"] = "Desconocido"
-
+            stats["row_count"] = self.client.query(
+                collection_name=self.collection_name, filter="", output_fields=["count(*)"]
+            )[0]["count(*)"]
             return stats
         except Exception as e:
             print(f"Error obteniendo estadísticas: {e}")

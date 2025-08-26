@@ -54,3 +54,5 @@ documentation.md
 milvus-standalone-docker-compose-gpu.yml
 
 models/*.onnx
+
+.env

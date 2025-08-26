@@ -5,9 +5,10 @@ from transformers import AutoTokenizer, AutoModel
 import torch
 import os
 from tqdm import tqdm
+from src.application.interfaces import EmbedderGPUGEnerator
 
 
-class GPUEmbeddingGenerator:
+class GPUEmbeddingGenerator(EmbedderGPUGEnerator):
     """
     Generador de embeddings optimizado para GPU mediante ONNX Runtime.
 

@@ -1,7 +1,18 @@
-from src.application.interfaces import DocumentLoader, TextProcessor, Chunker, Embedder, VectorStore
+from src.application.interfaces import (
+    DocumentLoader,
+    TextProcessor,
+    Chunker,
+    Embedder,
+    VectorStore,
+    OrchestratorInterface,
+)
+
+from src.domain.models import DocumentChunk, LLMResponse, SearchResult, DocumentPage
+
+from typing import List
 
 
-class Orchestrator:
+class Orchestrator(OrchestratorInterface):
     """Coordina el flujo de trabajo entre todos los componentes del sistema RAG"""
 
     def __init__(
@@ -24,51 +35,45 @@ class Orchestrator:
 
     def ingest_documents(self):
         """Ejecuta el proceso completo de ingesta de documentos"""
-        pages = self.loader.load()
+        pages: List[DocumentPage] = self.loader.load()
         print(f"Páginas cargadas: {len(pages)}")
 
-        chunks = self.chunker.chunk(pages)
+        chunks: List[DocumentChunk] = self.chunker.chunk(pages)
         print(f"Chunks creados: {len(chunks)}")
 
         self.vector_store.set_collection()
 
-        texts = [chunk["text"] for chunk in chunks]
+        texts = [chunk.text for chunk in chunks]
         embeddings = self.embedder.get_embeddings_batch(texts, batch_size=15)
 
-        data_to_insert = []
         for i, chunk in enumerate(chunks):
-            data_to_insert.append(
-                {
-                    "id": chunk["id"],
-                    "vector": embeddings[i],
-                    "text": chunk["text"][:1000],
-                    "page": chunk["page"],
-                    "source": chunk["source"],
-                }
-            )
+            chunk.embedding = embeddings[i]
 
-        self.vector_store.insert(data_to_insert, batch_size=100)
+        self.vector_store.insert(chunks, batch_size=100)
 
         stats = self.vector_store.get_stats()
         print(f"Estadísticas de la colección: {stats}")
 
-    def ask_question(self, question: str) -> str:
+    def ask_question(self, question: str) -> LLMResponse:
         """Procesa una pregunta y genera una respuesta"""
         print("1. Generando embedding para la pregunta...")
         question_embedding = self.embedder.get_embedding(question)
 
         print("2. Buscando en la base de conocimiento...")
-        results = self.vector_store.search(question_embedding, self.search_top_k)
+        results: List[SearchResult] = self.vector_store.search(question_embedding, self.search_top_k)
 
         if not results:
-            return "No encontré información relevante en los documentos para responder a esta pregunta."
+            return LLMResponse(
+                answer="No encontré información relevante en los documentos para responder a esta pregunta.",
+                source_chunks=[],
+            )
 
         # Formatear el contexto de una manera muy clara para el LLM
         context_parts = []
         for i, result in enumerate(results, 1):
-            source = result["metadata"].get("source", "desconocida")
-            page = result["metadata"].get("page", "?")
-            context_parts.append(f"--- Fuente {i} (Documento: {source}, Página: {page}) ---\n" f"{result['text']}\n")
+            source = result.chunk.metadata.get("source", "desconocida")
+            page = result.chunk.metadata.get("page", "?")
+            context_parts.append(f"--- Fuente {i} (Documento: {source}, Pagina: {page}) ---\n{result.chunk.text}")
         context = "\n".join(context_parts)
 
         # **PROMPT MEJORADO Y MÁS ESTRICTO**
@@ -103,4 +108,6 @@ class Orchestrator:
         import ollama
 
         response = ollama.chat(model=self.llm_model, messages=[{"role": "user", "content": prompt}])
-        return response["message"]["content"]
+
+        answer = response["message"]["content"]
+        return LLMResponse(answer=answer, source_chunks=results)
